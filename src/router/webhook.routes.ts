@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import crypto from "crypto";
 import Testimonial from "../models/testimonial.js";
 import Settings from "../models/settings.js";
+import Shop from "../models/shop.js";
 import { ApiResponse } from "../utils/api-response.js";
 import { StatusCode } from "../utils/status-code.js";
 import { AppError } from "../utils/app-error.js";
@@ -24,15 +25,29 @@ function verifyShopifyWebhook(req: Request, res: Response, next: NextFunction) {
       .json(new ApiResponse(false, "Missing request body"));
   }
 
-  const hash = crypto
-    .createHmac("sha256", process.env.SHOPIFY_API_SECRET || "")
-    .update(rawBody, "utf8")
-    .digest("base64");
+  const cleanSecret = (process.env.SHOPIFY_API_SECRET || "").trim();
+  const secrets = [cleanSecret, cleanSecret.replace("shpss_", "")];
 
-  const trusted = Buffer.from(hash, "base64");
-  const received = Buffer.from(hmacHeader, "base64");
+  let verified = false;
+  for (const secret of secrets) {
+    const hash = crypto
+      .createHmac("sha256", secret)
+      .update(rawBody, "utf8")
+      .digest("base64");
 
-  if (!crypto.timingSafeEqual(trusted, received)) {
+    const trusted = Buffer.from(hash, "base64");
+    const received = Buffer.from(hmacHeader, "base64");
+
+    if (
+      trusted.length === received.length &&
+      crypto.timingSafeEqual(trusted, received)
+    ) {
+      verified = true;
+      break;
+    }
+  }
+
+  if (!verified) {
     return res
       .status(StatusCode.UNAUTHORIZED)
       .json(new ApiResponse(false, "Invalid HMAC"));
@@ -43,25 +58,65 @@ function verifyShopifyWebhook(req: Request, res: Response, next: NextFunction) {
 }
 
 router.post(
-  "/uninstall",
+  "/webhook",
   verifyShopifyWebhook,
   asyncHandler(async (req: Request, res: Response) => {
-    const shop = req.body.shop;
-    if (!shop) {
-      throw new AppError("Missing shop parameter", StatusCode.BAD_REQUEST);
+    const topic = req.headers["x-shopify-topic"] as string;
+    const shopDomain = req.headers["x-shopify-shop-domain"] as string;
+    const shop = shopDomain || req.body?.myshopify_domain || req.body?.shop;
+
+    console.log(`[Webhook] Received topic=${topic} shop=${shop}`);
+
+    if (topic === "app/uninstalled") {
+      if (!shop) {
+        throw new AppError(
+          "Missing shop in uninstall webhook",
+          StatusCode.BAD_REQUEST,
+        );
+      }
+
+      // Soft-delete: null out tokens in shopify_sessions
+      const { getSequelize } = await import("../config/db.js");
+      const sequelize = getSequelize();
+      await sequelize.query(
+        `UPDATE shopify_sessions SET accessToken = NULL, refreshToken = NULL WHERE shop = ?`,
+        { replacements: [shop] },
+      );
+
+      // Delete shop record
+      // await Shop.destroy({ where: { shop } });
+      await Shop.update({ isActive: false }, { where: { shop } });
+
+      // Delete testimonials and settings
+      await Promise.all([
+        Testimonial.destroy({ where: { shop_domain: shop } }),
+        Settings.destroy({ where: { shop_domain: shop } }),
+      ]);
+
+      console.log(`[Webhook] Uninstall cleanup completed for ${shop}`);
     }
 
-    console.log(`Received app/uninstalled webhook for ${shop}`);
+    if (topic === "app/scopes_update") {
+      if (!shop) {
+        throw new AppError(
+          "Missing shop in scopes_update webhook",
+          StatusCode.BAD_REQUEST,
+        );
+      }
 
-    await Promise.all([
-      Testimonial.destroy({ where: { shop_domain: shop } }),
-      Settings.destroy({ where: { shop_domain: shop } }),
-    ]);
+      const current = req.body?.current;
+      if (current) {
+        const { getSequelize } = await import("../config/db.js");
+        const sequelize = getSequelize();
+        await sequelize.query(
+          `UPDATE shopify_sessions SET scope = ? WHERE shop = ?`,
+          { replacements: [current, shop] },
+        );
+        console.log(`[Webhook] Scopes updated for ${shop}`);
+      }
+    }
 
-    console.log(`Cleaned up data for ${shop}`);
-    res
-      .status(StatusCode.OK)
-      .json(new ApiResponse(true, "Uninstall webhook processed successfully"));
+    res.status(StatusCode.OK).json(new ApiResponse(true, "Received"));
   }),
 );
 

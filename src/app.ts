@@ -20,7 +20,7 @@ app.get("/", (_req, res) => {
 });
 
 // Capture raw body for webhook HMAC verification (must come before express.json)
-app.use("/api/webhooks", express.raw({ type: "application/json" }));
+app.use("/api/webhooks", express.raw({ type: "*/*" }));
 
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));
