@@ -1,0 +1,38 @@
+{
+  "name": "video-testimonial-backend",
+  "version": "1.0.0",
+  "description": "Video Testimonial App Backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "tsx --watch src/index.ts",
+    "build": "tsc",
+    "lint": "npx tsc --noEmit",
+    "migrate": "node migrations/migrate.cjs"
+  },
+  "keywords": [],
+  "author": "Ecs18",
+  "license": "ISC",
+  "type": "module",
+  "overrides": {
+    "qs": "6.16.0",
+    "body-parser": "1.20.6",
+    "uuid": "11.1.1"
+  },
+  "dependencies": {
+    "@types/sequelize": "^4.28.20",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "mysql2": "^3.11.0",
+    "sequelize": "^6.37.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.18.8",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.3"
+  }
+}
