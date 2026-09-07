@@ -29,15 +29,18 @@ export function initShopModel(): void {
       shopifyToken: {
         type: DataTypes.TEXT,
         allowNull: false,
+        field: "shopifyToken",
       },
       scope: {
         type: DataTypes.TEXT,
         allowNull: false,
+        field: "scope",
       },
       isActive: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: true,
+        field: "isActive",
       },
     },
     {
@@ -47,6 +50,7 @@ export function initShopModel(): void {
       timestamps: true,
       createdAt: "createdAt",
       updatedAt: "updatedAt",
+      underscored: false,
     },
   );
 }
