@@ -83,6 +83,25 @@ export const createTestimonial = asyncHandler(
       );
     }
 
+    const MAX_TESTIMONIALS = 10;
+    const existingTestimonials = await testimonialService.getAllTestimonials(shop);
+    if (existingTestimonials.length >= MAX_TESTIMONIALS) {
+      throw new AppError(
+        `Maximum limit of ${MAX_TESTIMONIALS} testimonials reached. Please delete an existing testimonial before adding a new one.`,
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
+    const duplicateTitle = existingTestimonials.find(
+      (t: any) => t.title.toLowerCase() === title.toLowerCase(),
+    );
+    if (duplicateTitle) {
+      throw new AppError(
+        `A testimonial with the title "${title}" already exists. Please use a different title.`,
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
     const testimonial = await testimonialService.createTestimonial({
       shop_domain: shop,
       title,
@@ -112,6 +131,17 @@ export const updateTestimonial = asyncHandler(
     if (!title || !video_url) {
       throw new AppError(
         "Title and video URL are required.",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
+    const allTestimonials = await testimonialService.getAllTestimonials(shop);
+    const duplicateTitle = allTestimonials.find(
+      (t: any) => t.title.toLowerCase() === title.toLowerCase() && t.id !== id,
+    );
+    if (duplicateTitle) {
+      throw new AppError(
+        `A testimonial with the title "${title}" already exists. Please use a different title.`,
         StatusCode.BAD_REQUEST,
       );
     }
