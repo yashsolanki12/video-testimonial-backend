@@ -32,8 +32,18 @@ export const updateSettings = asyncHandler(
     const shop = getShop(req);
     const { section_title, slider_effect, display_layout } = req.body;
 
-    if (!section_title) {
-      throw new AppError("Section title is required.", StatusCode.BAD_REQUEST);
+    if (!section_title || !display_layout) {
+      throw new AppError(
+        "Section title and display layout are required.",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
+    if (display_layout === "slider" && !slider_effect) {
+      throw new AppError(
+        "Slider effect is required when display layout is slider.",
+        StatusCode.BAD_REQUEST,
+      );
     }
 
     const settings = await settingsService.updateSettings(shop, {
@@ -54,9 +64,16 @@ export const createSettings = asyncHandler(
     const shop = getShop(req);
     const { section_title, slider_effect, display_layout } = req.body;
 
-    if (!section_title || !slider_effect || !display_layout) {
+    if (!section_title || !display_layout) {
       throw new AppError(
-        "All fields are required: section_title, slider_effect, display_layout.",
+        "Section title and display layout are required.",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
+    if (display_layout === "slider" && !slider_effect) {
+      throw new AppError(
+        "Slider effect is required when display layout is slider.",
         StatusCode.BAD_REQUEST,
       );
     }
