@@ -3,6 +3,8 @@ import { validateShopifyHeader } from "../middleware/auth.js";
 import {
   getSettings,
   updateSettings,
+  createSettings,
+  deleteSettings,
   getPublicSettings,
 } from "../controllers/settings.js";
 
@@ -17,7 +19,13 @@ router.use(validateShopifyHeader);
 // Get settings
 router.get("/", getSettings);
 
+// Create settings
+router.post("/add", createSettings);
+
 // Update settings
 router.put("/", updateSettings);
+
+// Delete settings
+router.delete("/:id", deleteSettings);
 
 export default router;
