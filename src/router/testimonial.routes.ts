@@ -26,7 +26,7 @@ router.get("/", getAllTestimonials);
 router.get("/:id", getTestimonialById);
 
 // Create testimonial
-router.post("/", createTestimonial);
+router.post("/add", createTestimonial);
 
 // Update testimonial
 router.put("/:id", updateTestimonial);

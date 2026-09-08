@@ -5,6 +5,8 @@ import testimonialRoutes from "./router/testimonial.routes.js";
 import settingsRoutes from "./router/settings.routes.js";
 import webhookRoutes from "./router/webhook.routes.js";
 import authRoutes from "./router/auth.routes.js";
+import sessionsRoutes from "./router/sessions.routes.js";
+import filesRoutes from "./router/files.routes.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { connectDB } from "./config/db.js";
 import { initTestimonialModel } from "./models/testimonial.js";
@@ -39,6 +41,7 @@ app.use(
     allowedHeaders: [
       "Content-Type",
       "x-shopify-shop-domain",
+      "x-shop-domain",
       "Accept",
       "Origin",
       "X-Requested-With",
@@ -52,6 +55,8 @@ app.use("/api/testimonials", testimonialRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/webhooks", webhookRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/sessions", sessionsRoutes);
+app.use("/api/files", filesRoutes);
 
 // Global error handler
 app.use(errorHandler);

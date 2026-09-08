@@ -8,24 +8,23 @@ import * as settingsService from "../services/settings.js";
 function getShop(req: Request): string {
   const shop = req.shopify?.session?.shop;
   if (!shop) {
-    throw new AppError("Unauthorized. Missing shop context.", StatusCode.UNAUTHORIZED);
+    throw new AppError(
+      "Unauthorized. Missing shop context.",
+      StatusCode.UNAUTHORIZED,
+    );
   }
   return shop;
 }
 
 // Get settings
-export const getSettings = asyncHandler(
-  async (req: Request, res: Response) => {
-    const shop = getShop(req);
-    const settings = await settingsService.getSettings(shop);
+export const getSettings = asyncHandler(async (req: Request, res: Response) => {
+  const shop = getShop(req);
+  const settings = await settingsService.getSettings(shop);
 
-    return res
-      .status(StatusCode.OK)
-      .json(
-        new ApiResponse(true, "Settings retrieved successfully.", settings),
-      );
-  },
-);
+  return res
+    .status(StatusCode.OK)
+    .json(new ApiResponse(true, "Settings retrieved successfully.", settings));
+});
 
 // Update settings
 export const updateSettings = asyncHandler(
@@ -34,10 +33,7 @@ export const updateSettings = asyncHandler(
     const { section_title, slider_effect, display_layout } = req.body;
 
     if (!section_title) {
-      throw new AppError(
-        "Section title is required.",
-        StatusCode.BAD_REQUEST,
-      );
+      throw new AppError("Section title is required.", StatusCode.BAD_REQUEST);
     }
 
     const settings = await settingsService.updateSettings(shop, {
@@ -48,9 +44,49 @@ export const updateSettings = asyncHandler(
 
     return res
       .status(StatusCode.OK)
-      .json(
-        new ApiResponse(true, "Settings updated successfully.", settings),
+      .json(new ApiResponse(true, "Settings updated successfully.", settings));
+  },
+);
+
+// Create settings
+export const createSettings = asyncHandler(
+  async (req: Request, res: Response) => {
+    const shop = getShop(req);
+    const { section_title, slider_effect, display_layout } = req.body;
+
+    if (!section_title || !slider_effect || !display_layout) {
+      throw new AppError(
+        "All fields are required: section_title, slider_effect, display_layout.",
+        StatusCode.BAD_REQUEST,
       );
+    }
+
+    const settings = await settingsService.createSettings(shop, {
+      section_title,
+      slider_effect,
+      display_layout,
+    });
+
+    return res
+      .status(StatusCode.CREATED)
+      .json(new ApiResponse(true, "Settings created successfully.", settings));
+  },
+);
+
+// Delete settings
+export const deleteSettings = asyncHandler(
+  async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id as string, 10);
+    const shop = getShop(req);
+    if (isNaN(id)) {
+      throw new AppError("Invalid ID format.", StatusCode.BAD_REQUEST);
+    }
+
+    await settingsService.deleteSettings(id, shop);
+
+    return res
+      .status(StatusCode.OK)
+      .json(new ApiResponse(true, "Settings deleted successfully.", null));
   },
 );
 
@@ -68,7 +104,11 @@ export const getPublicSettings = asyncHandler(
     return res
       .status(StatusCode.OK)
       .json(
-        new ApiResponse(true, "Public settings retrieved successfully.", settings),
+        new ApiResponse(
+          true,
+          "Public settings retrieved successfully.",
+          settings,
+        ),
       );
   },
 );
