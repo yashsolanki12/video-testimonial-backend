@@ -47,7 +47,7 @@ export function initTestimonialModel(): void {
         },
       },
       video_type: {
-        type: DataTypes.ENUM("youtube", "vimeo", "shopify"),
+        type: DataTypes.ENUM("youtube", "vimeo", "shopify", "other"),
         allowNull: false,
         defaultValue: "youtube",
       },

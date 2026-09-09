@@ -5,6 +5,9 @@ import { asyncHandler } from "../utils/async-handler.js";
 import { AppError } from "../utils/app-error.js";
 import * as settingsService from "../services/settings.js";
 
+const VALID_DISPLAY_LAYOUTS = ["slider", "grid"];
+const VALID_SLIDER_EFFECTS = ["standard", "fade", "carousel"];
+
 function getShop(req: Request): string {
   const shop = req.shopify?.session?.shop;
   if (!shop) {
@@ -39,16 +42,31 @@ export const updateSettings = asyncHandler(
       );
     }
 
-    if (display_layout === "slider" && !slider_effect) {
+    if (!VALID_DISPLAY_LAYOUTS.includes(display_layout)) {
       throw new AppError(
-        "Slider effect is required when display layout is slider.",
+        `Invalid display layout. Must be one of: ${VALID_DISPLAY_LAYOUTS.join(", ")}`,
         StatusCode.BAD_REQUEST,
       );
     }
 
+    if (display_layout === "slider") {
+      if (!slider_effect) {
+        throw new AppError(
+          "Slider effect is required when display layout is slider.",
+          StatusCode.BAD_REQUEST,
+        );
+      }
+      if (!VALID_SLIDER_EFFECTS.includes(slider_effect)) {
+        throw new AppError(
+          `Invalid slider effect. Must be one of: ${VALID_SLIDER_EFFECTS.join(", ")}`,
+          StatusCode.BAD_REQUEST,
+        );
+      }
+    }
+
     const settings = await settingsService.updateSettings(shop, {
       section_title,
-      slider_effect,
+      slider_effect: display_layout === "grid" ? "standard" : slider_effect,
       display_layout,
     });
 
@@ -71,16 +89,31 @@ export const createSettings = asyncHandler(
       );
     }
 
-    if (display_layout === "slider" && !slider_effect) {
+    if (!VALID_DISPLAY_LAYOUTS.includes(display_layout)) {
       throw new AppError(
-        "Slider effect is required when display layout is slider.",
+        `Invalid display layout. Must be one of: ${VALID_DISPLAY_LAYOUTS.join(", ")}`,
         StatusCode.BAD_REQUEST,
       );
     }
 
+    if (display_layout === "slider") {
+      if (!slider_effect) {
+        throw new AppError(
+          "Slider effect is required when display layout is slider.",
+          StatusCode.BAD_REQUEST,
+        );
+      }
+      if (!VALID_SLIDER_EFFECTS.includes(slider_effect)) {
+        throw new AppError(
+          `Invalid slider effect. Must be one of: ${VALID_SLIDER_EFFECTS.join(", ")}`,
+          StatusCode.BAD_REQUEST,
+        );
+      }
+    }
+
     const settings = await settingsService.createSettings(shop, {
       section_title,
-      slider_effect,
+      slider_effect: display_layout === "grid" ? "standard" : slider_effect,
       display_layout,
     });
 
