@@ -5,6 +5,8 @@ import { asyncHandler } from "../utils/async-handler.js";
 import { AppError } from "../utils/app-error.js";
 import * as testimonialService from "../services/testimonial.js";
 
+const VALID_VIDEO_TYPES = ["youtube", "vimeo", "shopify", "other"];
+
 function getShop(req: Request): string {
   const shop = req.shopify?.session?.shop;
   if (!shop) {
@@ -83,6 +85,13 @@ export const createTestimonial = asyncHandler(
       );
     }
 
+    if (video_type && !VALID_VIDEO_TYPES.includes(video_type)) {
+      throw new AppError(
+        `Invalid video type. Must be one of: ${VALID_VIDEO_TYPES.join(", ")}`,
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
     const MAX_TESTIMONIALS = 10;
     const existingTestimonials = await testimonialService.getAllTestimonials(shop);
     if (existingTestimonials.length >= MAX_TESTIMONIALS) {
@@ -131,6 +140,13 @@ export const updateTestimonial = asyncHandler(
     if (!title || !video_url) {
       throw new AppError(
         "Title and video URL are required.",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
+    if (video_type && !VALID_VIDEO_TYPES.includes(video_type)) {
+      throw new AppError(
+        `Invalid video type. Must be one of: ${VALID_VIDEO_TYPES.join(", ")}`,
         StatusCode.BAD_REQUEST,
       );
     }
