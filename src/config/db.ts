@@ -17,10 +17,10 @@ export function connectDB(config: DBConfig): Sequelize {
     dialect: "mysql",
     logging: process.env.NODE_ENV === "development" ? console.log : false,
     pool: {
-      max: 10,
+      max: 1,
       min: 0,
       acquire: 30000,
-      idle: 10000,
+      idle: 5000,
     },
     define: {
       timestamps: true,
